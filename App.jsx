@@ -7,42 +7,46 @@ import {TextInput, KeyboardAvoidingView} from 'react-native';
 
 import {Animated, Easing, PanResponder,Switch, RefreshControl, StatusBar, ActivityIndicator, Modal, Alert, Linking} from 'react-native';
 import {BackHandler,Dimensions, Platform, Vibration, PermissionsAndroid, ToastAndroid} from 'react-native';
+import WebView from 'react-native-webview';
 
-import styles from './styles';
-import Link from './Link';
+import $ from 'jquery';
+
+
+// export default ()=>{
+//   return <WebView source={{uri:"https://www.naver.com"}} />
+// }
+
 
 export default ()=>{
-  let [value, valueChanger] = useState("");
-  let [data, dataChanger] = useState([]);
-  return <View>
-    <View style={{width:"100%", height:"30%"}}>
-      <Text style={{textAlign:"center", fontSize:50, fontWeight:700, color:"black"}}>TodoList</Text>
-      <TextInput value={value} onChangeText={valueChanger} placeholder='할 일을 입력하세요!' style={{width:"60%",marginLeft:50,marginRight:50, marginTop:30, borderBottomWidth:3, color:"black", fontSize:20}}/>
-      <Pressable onPress={()=>{
-        dataChanger([...data, {value:value}]);
-        valueChanger("");
-      }} style={{backgroundColor:"skyblue", width:60, height:45,position:"absolute", right:50, top:105, borderRadius:4}}>
-        <Text style={{color:"white", fontSize:20, textAlign:"center", lineHeight:40}}>등록</Text>
-      </Pressable>
-    </View>
-  
-    <FlatList
-    data={data}
-    renderItem={({item, index})=>{
-      return <View style={{borderRadius:4, width:"75%", backgroundColor:"#4565f2",marginLeft:"12.5%", marginTop:15, height:40, justifyContent:"center"}}>
-        <Text style={{color:"darkblue", fontWeight:900, fontSize:20, left:10}}>{item.value}</Text>
-        <Pressable onPress={()=>{
-          dataChanger(data.filter((v,i)=>i != index));
-        }} title="삭제" style={{backgroundColor:"#d524d5", width:50, height:"70%", position:"absolute", right:5, borderRadius:4}}>
-          <Text style={{color:"white", textAlign:"center", lineHeight:27, fontSize:20}}>삭제</Text>
-        </Pressable>
-      </View>
-    }}
-    style={{marginTop:10, height:"70%"}}
-    />
-  </View>
-}
+  let web = useRef(null);
+  let [data,dataC] = useState("");
 
+  BackHandler.addEventListener("hardwareBackPress",(e)=>{
+    web.postMessage("back");
+    return true
+  });
+  return <WebView
+    ref={(_ref)=>web=_ref}
+    onMessage={()=>{
+      dataC(data);
+    }}
+    originWhitelist={["*"]}
+    javaScriptEnabled={true}
+    injectedJavaScriptObject={{title:"제목",body:"내용"}}
+    injectedJavaScript={`
+      document.addEventListener("message",(e)=>{
+        if(e.data =="back"){
+          window.history.back();
+        }
+        else window.ReactNativeWebView.postMessage(parseInt(e.data) + 2);
+      })
+    `}
+    source={{uri:"http://192.168.6.21:8016/Members"}}
+    renderLoading={()=><View><Text>로딩중</Text></View>}
+    startInLoadingState
+    renderError={()=><View><Text>에러</Text></View>}
+    />
+  }
 
 
 // export default ()=>{
